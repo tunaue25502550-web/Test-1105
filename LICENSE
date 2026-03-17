@@ -1,21 +1,225 @@
-MIT License
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
-Copyright (c) 2026 tunaue25502550-web
+// ================== Abstraction ==================
+abstract class Person
+{
+    public string Name { get; set; }
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+    public Person(string name)
+    {
+        Name = name;
+    }
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+    public abstract void ShowInfo();
+}
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+// ================== Interface (เพิ่มความโปร) ==================
+interface IGradeCalculator
+{
+    string CalculateGrade(double score);
+}
+
+// ================== Inheritance + Encapsulation ==================
+class Student : Person, IGradeCalculator
+{
+    private string studentId;
+    private double score;
+
+    public string StudentId
+    {
+        get { return studentId; }
+        set { studentId = value; }
+    }
+
+    public double Score
+    {
+        get { return score; }
+        set { score = value; }
+    }
+
+    public Student(string name, string id, double score) : base(name)
+    {
+        this.studentId = id;
+        this.score = score;
+    }
+
+    public override void ShowInfo()
+    {
+        Console.WriteLine($"Name: {Name}, ID: {studentId}, Score: {score}, Grade: {CalculateGrade(score)}");
+    }
+
+    public string CalculateGrade(double score)
+    {
+        if (score >= 80) return "A";
+        else if (score >= 75) return "B+";
+        else if (score >= 70) return "B";
+        else if (score >= 65) return "C+";
+        else if (score >= 60) return "C";
+        else if (score >= 55) return "D+";
+        else if (score >= 50) return "D";
+        else return "F";
+    }
+}
+
+// ================== Subject ==================
+class Subject
+{
+    public string SubjectName { get; set; }
+    public string SubjectCode { get; set; }
+
+    private List<Student> students = new List<Student>();
+
+    public Subject(string name, string code)
+    {
+        SubjectName = name;
+        SubjectCode = code;
+    }
+
+    public void AddStudent(Student student)
+    {
+        students.Add(student);
+    }
+
+    public void ShowAllStudents()
+    {
+        if (students.Count == 0)
+        {
+            Console.WriteLine("No students.");
+            return;
+        }
+
+        foreach (var s in students)
+        {
+            s.ShowInfo();
+        }
+    }
+
+    public double GetAverage()
+    {
+        if (students.Count == 0) return 0;
+        return students.Average(s => s.Score);
+    }
+
+    public Student GetMaxScore()
+    {
+        if (students.Count == 0) return null;
+        return students.OrderByDescending(s => s.Score).FirstOrDefault();
+    }
+
+    public Student GetMinScore()
+    {
+        if (students.Count == 0) return null;
+        return students.OrderBy(s => s.Score).FirstOrDefault();
+    }
+}
+
+// ================== Program ==================
+class Program
+{
+    static void Main(string[] args)
+    {
+        Subject subject = null;
+
+        while (true)
+        {
+            Console.WriteLine("\n===== MENU =====");
+            Console.WriteLine("1. Create Subject");
+            Console.WriteLine("2. Add Student");
+            Console.WriteLine("3. Show All Students");
+            Console.WriteLine("4. Show Max/Min Score");
+            Console.WriteLine("5. Show Average");
+            Console.WriteLine("0. Exit");
+
+            Console.Write("Select: ");
+            string choice = Console.ReadLine();
+
+            switch (choice)
+            {
+                case "1":
+                    Console.Write("Subject Name: ");
+                    string name = Console.ReadLine();
+
+                    Console.Write("Subject Code: ");
+                    string code = Console.ReadLine();
+
+                    subject = new Subject(name, code);
+                    Console.WriteLine("Subject created!");
+                    break;
+
+                case "2":
+                    if (subject == null)
+                    {
+                        Console.WriteLine("Please create subject first.");
+                        break;
+                    }
+
+                    Console.Write("Name: ");
+                    string sName = Console.ReadLine();
+
+                    Console.Write("ID: ");
+                    string id = Console.ReadLine();
+
+                    double score;
+                    Console.Write("Score: ");
+                    while (!double.TryParse(Console.ReadLine(), out score))
+                    {
+                        Console.Write("Invalid input, enter score again: ");
+                    }
+
+                    subject.AddStudent(new Student(sName, id, score));
+                    Console.WriteLine("Student added!");
+                    break;
+
+                case "3":
+                    if (subject == null)
+                    {
+                        Console.WriteLine("Please create subject first.");
+                        break;
+                    }
+                    subject.ShowAllStudents();
+                    break;
+
+                case "4":
+                    if (subject == null)
+                    {
+                        Console.WriteLine("Please create subject first.");
+                        break;
+                    }
+
+                    var max = subject.GetMaxScore();
+                    var min = subject.GetMinScore();
+
+                    if (max == null || min == null)
+                    {
+                        Console.WriteLine("No students.");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Max: {max.Name} ({max.Score})");
+                        Console.WriteLine($"Min: {min.Name} ({min.Score})");
+                    }
+                    break;
+
+                case "5":
+                    if (subject == null)
+                    {
+                        Console.WriteLine("Please create subject first.");
+                        break;
+                    }
+
+                    Console.WriteLine($"Average: {subject.GetAverage():F2}");
+                    break;
+
+                case "0":
+                    Console.WriteLine("Exit program.");
+                    return;
+
+                default:
+                    Console.WriteLine("Invalid menu.");
+                    break;
+            }
+        }
+    }
+}
